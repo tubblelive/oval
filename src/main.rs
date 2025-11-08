@@ -1,3 +1,5 @@
+extern crate core;
+
 use crate::model::fail::Fail;
 use crate::model::geo_data::GeoData;
 use crate::model::request_data::QueryAddress;
@@ -9,6 +11,7 @@ use axum::{Json, Router};
 use ipnet::IpNet;
 use iptrie::IpLCTrieMap;
 use std::env;
+use std::net::IpAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
@@ -18,18 +21,16 @@ mod model;
 
 #[derive(Clone)]
 pub(crate) struct AppState {
-    pub trie: Arc<IpLCTrieMap<Arc<GeoData>>>
+    pub tries: Arc<Vec<IpLCTrieMap<Arc<GeoData>>>>
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    println!("Downloading and compiling trie...");
-
     let file = download::start().await?;
     let trie = reader::parse_csv(file).await?;
 
     let state = AppState {
-        trie: Arc::new(trie)
+        tries: Arc::new(trie)
     };
 
     tracing_subscriber::fmt::init();
@@ -58,11 +59,18 @@ async fn query(
 ) -> Result<impl IntoResponse, Fail> {
     let address = payload.address;
 
+    let empty_addr = "0.0.0.0".parse::<IpAddr>().unwrap();
     let net: IpNet = address.parse()
         .map_err(|error| Fail::new(format!("Invalid address provided! {error}")))?;
 
-    let (_, data) = state.trie.lookup(&net);
-    let data = data.as_ref().clone();
+    let data = state.tries
+        .iter()
+        .map(|it| it.lookup(&net).1)
+        .filter(|it| !it.start.eq(&empty_addr))
+        .nth(0);
 
-    Ok((StatusCode::OK, Json::from(data)))
+    match data {
+        Some(data) => Ok((StatusCode::OK, Json::from(data.as_ref().clone()))),
+        None => Err(Fail::new("No data was found for the provided address")),
+    }
 }

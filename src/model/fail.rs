@@ -19,6 +19,12 @@ impl Fail {
 
 impl IntoResponse for Fail {
     fn into_response(self) -> Response {
-        (StatusCode::BAD_REQUEST, Json(json!({ "error": self.message }))).into_response()
+        (
+            StatusCode::BAD_REQUEST,
+            Json(json!({
+                "error": true,
+                "message": self.message,
+            }))
+        ).into_response()
     }
 }

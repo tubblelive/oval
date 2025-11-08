@@ -3,6 +3,7 @@ use flate2::write::GzDecoder;
 use futures_util::StreamExt;
 use reqwest::Client;
 use std::fs::File;
+use std::io;
 use std::io::Write;
 use std::path::PathBuf;
 use tokio::fs;
@@ -10,6 +11,9 @@ use tokio::fs;
 const DOWNLOAD_URL: &'static str = "https://download.db-ip.com/free/dbip-city-lite-2025-11.csv.gz";
 
 pub(crate) async fn start() -> anyhow::Result<PathBuf> {
+    print!("📦  Downloading and compiling trie... ");
+    io::stdout().flush()?;
+
     let directory = PathBuf::from("./data");
     if !directory.exists() {
         fs::create_dir_all(&directory).await?;
@@ -18,6 +22,7 @@ pub(crate) async fn start() -> anyhow::Result<PathBuf> {
     let file = directory.join("geo.csv");
     if file.exists() {
         // Already downloaded
+        println!("Done");
         return Ok(file)
     }
 
@@ -37,7 +42,7 @@ pub(crate) async fn start() -> anyhow::Result<PathBuf> {
     }
 
     deflater.flush()?;
-    println!("Successfully downloaded data to ./data/geo.csv");
+    println!("Done");
 
     Ok(file)
 }
