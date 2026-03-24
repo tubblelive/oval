@@ -8,7 +8,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use tokio::fs;
 
-const DOWNLOAD_URL: &'static str = "https://download.db-ip.com/free/dbip-city-lite-2026-01.csv.gz";
+const DOWNLOAD_URL: &'static str = "https://download.db-ip.com/free/dbip-city-lite-2026-03.csv.gz";
 
 pub(crate) async fn start() -> anyhow::Result<PathBuf> {
     print!("📦  Downloading and compiling trie... ");
