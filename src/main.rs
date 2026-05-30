@@ -41,7 +41,7 @@ async fn main() -> anyhow::Result<()> {
         .with_state(state);
 
     let port = env::var("PORT").unwrap_or("8080".to_owned());
-    let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
+    let listener = TcpListener::bind(format!("[::]:{}", port)).await?;
     println!("Listening on port {}", port);
 
     axum::serve(listener, app).await?;

@@ -13,7 +13,7 @@ const MAX_ATTEMPTS: i32 = 3;
 const DOWNLOAD_URL: &'static str = "https://download.db-ip.com/free/dbip-city-lite-{year}-{month}.csv.gz";
 
 pub(crate) async fn start() -> anyhow::Result<PathBuf> {
-    print!("📦  Downloading and compiling trie... ");
+    print!("📦  Downloading... ");
     io::stdout().flush()?;
 
     let directory = PathBuf::from("./data");
