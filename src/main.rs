@@ -10,14 +10,22 @@ use axum::routing::{get, post};
 use axum::{Json, Router};
 use ipnet::IpNet;
 use iptrie::IpLCTrieMap;
-use std::env;
 use std::net::IpAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
+use clap::Parser;
 
 mod download;
 mod model;
 mod reader;
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// The port to use when running oval
+    #[arg(short, long, default_value_t = 8080, env = "PORT")]
+    port: i32,
+}
 
 #[derive(Clone)]
 pub(crate) struct AppState {
@@ -26,6 +34,7 @@ pub(crate) struct AppState {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let args = Args::parse();
     let file = download::start().await?;
     let trie = reader::parse_csv(file).await?;
 
@@ -40,9 +49,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/query", post(query))
         .with_state(state);
 
-    let port = env::var("PORT").unwrap_or("8080".to_owned());
-    let listener = TcpListener::bind(format!("[::]:{}", port)).await?;
-    println!("Listening on port {}", port);
+    let listener = TcpListener::bind(format!("[::]:{}", args.port)).await?;
+    println!("Listening on port {}", args.port);
 
     axum::serve(listener, app).await?;
     Ok(())
